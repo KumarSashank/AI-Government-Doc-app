@@ -8,7 +8,10 @@ router.post("/", async (req, res) => {
   res.send("AI Govt Demo");
 });
 
+router.options("/generate-document", cors(corsConfig)); // Handle preflight for specific route
+
 router.post("/generate-document", async (req, res) => {
+  res.set("Access-Control-Allow-Origin", "*"); // Set this in response if still necessary
   const { documentType, fields } = req.body;
 
   let prompt = "";
@@ -21,11 +24,11 @@ router.post("/generate-document", async (req, res) => {
   try {
     console.log("API Key:", process.env.OPENAI_API_KEY);
 
-    // Make request to OpenAI API using fetch
+    // Make request to OpenAI API
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
-        Authorization: `Bearer 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`,
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
