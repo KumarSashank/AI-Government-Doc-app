@@ -1,0 +1,107 @@
+const { Router } = require("express");
+// const jwt = require("jsonwebtoken");
+const router = Router();
+// const multer = require("multer");
+// const fs = require("fs");
+
+router.post("/generate-document", async (req, res) => {
+  const { documentType, fields } = req.body;
+
+  let prompt = "";
+  if (documentType === "letter") {
+    prompt = generateLetterPrompt(fields);
+  } else {
+    prompt = generatePrompt(documentType, fields);
+  }
+
+  try {
+    console.log("API Key:", process.env.OPENAI_API_KEY);
+
+    // Make request to OpenAI API using fetch
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer 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`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "gpt-3.5-turbo",
+        messages: [{ role: "user", content: prompt }],
+        max_tokens: 1000,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error("Error from OpenAI API:", errorData);
+      return res
+        .status(response.status)
+        .json({ error: "Failed to generate document." });
+    }
+
+    const responseData = await response.json();
+    res.json({ draft: responseData.choices[0].message.content });
+  } catch (error) {
+    console.error("Error generating document:", error);
+    res.status(500).json({ error: "Failed to generate document." });
+  }
+});
+
+// Function to generate prompt based on document type and fields
+function generatePrompt(documentType, fields) {
+  let prompt = "";
+
+  switch (documentType) {
+    case "letter":
+      prompt = `Generate a letter from ${fields.senderName} to ${fields.recipientName}. Purpose: ${fields.purpose}. Details: ${fields.details}`;
+      break;
+    case "tender":
+      prompt = `Draft a tender document titled ${fields.title}. Scope: ${fields.scope}. Requirements: ${fields.requirements}. Dates: ${fields.dates}.`;
+      break;
+    case "notice":
+      prompt = `Create a public notice titled ${fields.title}. Purpose: ${fields.purpose}. Details: ${fields.details}`;
+      break;
+    // Add more cases for different document types...
+    default:
+      prompt = "Generate a document.";
+  }
+  return prompt;
+}
+
+// Letter prompt generation
+function generateLetterPrompt(fields) {
+  const {
+    senderDetails,
+    recipientDetails,
+    purpose,
+    references,
+    tone,
+    date,
+    sampleReference,
+  } = fields;
+
+  let prompt = `Write a professional letter with the following details:
+    
+  From: ${senderDetails}
+  To: ${recipientDetails}
+  
+  Purpose of the Letter: ${purpose}
+  
+  References: ${references}
+  
+  Tone of the Letter: ${tone}
+  
+  Date of the Letter: ${date}
+  `;
+
+  if (sampleReference) {
+    prompt += `Sample Reference Document: Use this sample as a reference to guide the tone and structure of the letter.`;
+  }
+
+  prompt += `
+  Please draft the letter in a clear, structured, and ${tone.toLowerCase()} tone. Make sure it addresses the purpose effectively, with any relevant background information provided in the references section.`;
+
+  return prompt;
+}
+
+module.exports = router;
