@@ -4,6 +4,10 @@ const router = Router();
 // const multer = require("multer");
 // const fs = require("fs");
 
+router.post("/", async (req, res) => {
+  res.send("AI Govt Demo");
+});
+
 router.post("/generate-document", async (req, res) => {
   const { documentType, fields } = req.body;
 
