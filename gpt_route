@@ -115,7 +115,8 @@ function generateLetterPrompt(fields) {
   }
 
   prompt += `
-  Please draft the letter in a clear, structured, and ${tone.toLowerCase()} tone. Make sure it addresses the purpose effectively, with any relevant background information provided in the references section.`;
+  Please draft the letter in a clear, structured, and ${tone.toLowerCase()} tone. Make sure it addresses the purpose effectively, with any relevant background information provided in the references section.
+  And make sure to use all the fields I provided`;
 
   return prompt;
 }
