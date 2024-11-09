@@ -121,4 +121,103 @@ function generateLetterPrompt(fields) {
   return prompt;
 }
 
+// New endpoint for tender documents
+router.post("/generate-tender-document", async (req, res) => {
+  res.set("Access-Control-Allow-Origin", "*");
+  const { fields } = req.body;
+
+  const prompt = generateTenderPrompt(fields);
+
+  try {
+    console.log("API Key:", process.env.OPENAI_API_KEY);
+
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "gpt-3.5-turbo",
+        messages: [{ role: "user", content: prompt }],
+        max_tokens: 1500,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error("Error from OpenAI API:", errorData);
+      return res
+        .status(response.status)
+        .json({ error: "Failed to generate tender document." });
+    }
+
+    const responseData = await response.json();
+    res.json({ draft: responseData.choices[0].message.content });
+  } catch (error) {
+    console.error("Error generating tender document:", error);
+    res.status(500).json({ error: "Failed to generate tender document." });
+  }
+});
+
+// Function to generate prompt based on tender fields
+function generateTenderPrompt(fields) {
+  const {
+    tenderTitle,
+    tenderDescription,
+    referencePolicies,
+    scopeOfWork,
+    tenderConditions,
+    paymentTerms,
+    eligibilityCriterion,
+    importantDates,
+    winnerEligibility,
+    exemptions,
+    sampleTender,
+  } = fields;
+
+  let prompt = `Draft a comprehensive tender document with the following details:
+
+  Title: ${tenderTitle}
+
+  Description:
+  ${tenderDescription}
+
+  Reference Policies:
+  ${referencePolicies}
+
+  Scope of Work:
+  ${scopeOfWork}
+
+  Tender Conditions:
+  ${tenderConditions}
+
+  Payment Terms:
+  ${paymentTerms}
+
+  Eligibility Criterion:
+  ${eligibilityCriterion}
+
+  Important Dates:
+  ${importantDates}
+
+  Tender Winner Eligibility:
+  ${winnerEligibility}
+
+  Exemptions:
+  ${exemptions}
+  `;
+
+  if (sampleTender) {
+    prompt += `
+    Sample Tender Reference: Include guidance based on this sample tender document to ensure consistency in tone and structure.`;
+  }
+
+  prompt += `
+  
+  Please ensure the document is clear, formal, and includes all the provided fields in a structured format.`;
+
+  return prompt;
+}
+
 module.exports = router;
