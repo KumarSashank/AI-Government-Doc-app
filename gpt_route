@@ -17,7 +17,9 @@ router.post("/", async (req, res) => {
   res.send("AI Govt Demo");
 });
 
-router.options("/generate-document", cors(corsConfig)); // Handle preflight for specific route
+router.options("/generate-document", cors(corsConfig)); // Handle - preflight for specific route
+
+router.options("/generate-tender-document", cors(corsConfig)); // Handle - preflight for specific route
 
 router.post("/generate-document", async (req, res) => {
   res.set("Access-Control-Allow-Origin", "*"); // Set this in response if still necessary
